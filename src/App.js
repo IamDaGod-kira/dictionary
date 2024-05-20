@@ -4,20 +4,34 @@ import { FaSearch } from "react-icons/fa";
 import { FcSpeaker } from "react-icons/fc";
 
 function App() {
-  const [data, setData] = useState("");
+  const [data, setData] = useState(null);
   const [searchWord, setSearchWord] = useState("");
 
   function getMeaning() {
     Axios.get(
-      `https://api.dictionaryapi.dev/api/v2/entries/en/${searchWord}`
+      `https://www.dictionaryapi.com/api/v3/references/collegiate/json/${searchWord}?key=a2d3b46e-d8db-458c-9e3a-a10b3a9ddf79`
     ).then((response) => {
-      setData(response.data[0]);
+      if (response.data.length > 0 && typeof response.data[0] === "object") {
+        setData(response.data[0]);
+      } else {
+        setData(null);
+      }
     });
   }
 
   function playAudio() {
-    let audio = new Audio(data.phonetics[0].audio);
-    audio.play();
+    if (
+      data &&
+      data.hwi &&
+      data.hwi.prs &&
+      data.hwi.prs[0] &&
+      data.hwi.prs[0].sound
+    ) {
+      let audio = new Audio(
+        `https://media.merriam-webster.com/audio/prons/en/us/mp3/${data.hwi.prs[0].sound.audio}.mp3`
+      );
+      audio.play();
+    }
   }
 
   return (
@@ -44,7 +58,7 @@ function App() {
       {data && (
         <div className="bg-green-50 dark:bg-green-900 p-4 rounded-lg shadow-lg w-full max-w-md">
           <h2 className="text-2xl font-bold text-green-700 dark:text-green-200 flex items-center mb-4">
-            {data.word}{" "}
+            {data.meta.id}{" "}
             <button
               onClick={playAudio}
               className="ml-2 text-green-700 dark:text-green-200"
@@ -55,21 +69,30 @@ function App() {
           <h4 className="text-xl font-semibold text-green-600 dark:text-green-300">
             Parts of speech:
           </h4>
-          <p className="text-green-700 dark:text-green-200">
-            {data.meanings[0].partOfSpeech}
-          </p>
+          <p className="text-green-700 dark:text-green-200">{data.fl}</p>
           <h4 className="text-xl font-semibold text-green-600 dark:text-green-300 mt-4">
             Definition:
           </h4>
-          <p className="text-green-700 dark:text-green-200">
-            {data.meanings[0].definitions[0].definition}
-          </p>
+          {data.def[0].sseq.map((sseqItem, index) => (
+            <p key={index} className="text-green-700 dark:text-green-200">
+              {sseqItem[0][1].dt[0][1].replace(/\{.*?\}/g, "")}
+            </p>
+          ))}
           <h4 className="text-xl font-semibold text-green-600 dark:text-green-300 mt-4">
-            Example:
+            Examples:
           </h4>
-          <p className="text-green-700 dark:text-green-200">
-            {data.meanings[0].definitions[0].example}
-          </p>
+          {data.def[0].sseq.map(
+            (sseqItem, index) =>
+              sseqItem[0][1].dt[1] &&
+              sseqItem[0][1].dt[1][1].map((exampleItem, exampleIndex) => (
+                <p
+                  key={exampleIndex}
+                  className="text-green-700 dark:text-green-200"
+                >
+                  {exampleItem.t}
+                </p>
+              ))
+          )}
         </div>
       )}
     </div>
@@ -77,3 +100,4 @@ function App() {
 }
 
 export default App;
+
