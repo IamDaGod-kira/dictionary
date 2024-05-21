@@ -20,18 +20,17 @@ function App() {
   }
 
   function playAudio() {
-    if (
-      data &&
-      data.hwi &&
-      data.hwi.prs &&
-      data.hwi.prs[0] &&
-      data.hwi.prs[0].sound
-    ) {
-      let audio = new Audio(
-        `https://media.merriam-webster.com/audio/prons/en/us/mp3/${data.hwi.prs[0].sound.audio}.mp3`
-      );
+    if (data && data.hwi && data.hwi.prs && data.hwi.prs[0] && data.hwi.prs[0].sound) {
+      let audio = new Audio(`https://media.merriam-webster.com/audio/prons/en/us/mp3/${data.hwi.prs[0].sound.audio}.mp3`);
       audio.play();
     }
+  }
+
+  function parseText(text) {
+    return text ? text.replace(/\{wi\}/g, "<i>").replace(/\{\/wi\}/g, "</i>")
+               .replace(/\{bc\}/g, "<strong>").replace(/\{\/bc\}/g, "</strong>")
+               .replace(/\{sx\|\w+\|\|/g, "").replace(/\}/g, "")
+               .replace(/\{a_link\|\w+\}/g, "").replace(/\{\/a_link\}/g, "") : "";
   }
 
   return (
@@ -67,32 +66,37 @@ function App() {
             </button>
           </h2>
           <h4 className="text-xl font-semibold text-green-600 dark:text-green-300">
+            Pronunciation:
+          </h4>
+          <p className="text-green-700 dark:text-green-200">
+            {data.hwi && data.hwi.prs && data.hwi.prs[0] && data.hwi.prs[0].mw}
+          </p>
+          <h4 className="text-xl font-semibold text-green-600 dark:text-green-300">
             Parts of speech:
           </h4>
-          <p className="text-green-700 dark:text-green-200">{data.fl}</p>
+          <p className="text-green-700 dark:text-green-200">
+            {data.fl}
+          </p>
           <h4 className="text-xl font-semibold text-green-600 dark:text-green-300 mt-4">
             Definition:
           </h4>
-          {data.def[0].sseq.map((sseqItem, index) => (
-            <p key={index} className="text-green-700 dark:text-green-200">
-              {sseqItem[0][1].dt[0][1].replace(/\{.*?\}/g, "")}
-            </p>
+          {data.def && data.def[0] && data.def[0].sseq && data.def[0].sseq.map((sseqItem, index) => (
+            <p key={index} className="text-green-700 dark:text-green-200" dangerouslySetInnerHTML={{ __html: parseText(sseqItem[0][1].dt[0][1]) }} />
           ))}
           <h4 className="text-xl font-semibold text-green-600 dark:text-green-300 mt-4">
             Examples:
           </h4>
-          {data.def[0].sseq.map(
-            (sseqItem, index) =>
-              sseqItem[0][1].dt[1] &&
-              sseqItem[0][1].dt[1][1].map((exampleItem, exampleIndex) => (
-                <p
-                  key={exampleIndex}
-                  className="text-green-700 dark:text-green-200"
-                >
-                  {exampleItem.t}
-                </p>
-              ))
-          )}
+          {data.def && data.def[0] && data.def[0].sseq && data.def[0].sseq.map((sseqItem, index) => (
+            sseqItem[0][1].dt[1] && sseqItem[0][1].dt[1][1] && sseqItem[0][1].dt[1][1].map((exampleItem, exampleIndex) => (
+              <p key={exampleIndex} className="text-green-700 dark:text-green-200" dangerouslySetInnerHTML={{ __html: parseText(exampleItem.t) }} />
+            ))
+          ))}
+          <h4 className="text-xl font-semibold text-green-600 dark:text-green-300 mt-4">
+            Offensive:
+          </h4>
+          <p className="text-green-700 dark:text-green-200">
+            {data.meta.offensive ? "Yes" : "No"}
+          </p>
         </div>
       )}
     </div>
@@ -100,4 +104,3 @@ function App() {
 }
 
 export default App;
-
